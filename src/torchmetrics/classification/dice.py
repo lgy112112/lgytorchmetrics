@@ -287,3 +287,59 @@ class Dice(Metric):
 
         """
         return self._plot(val, ax)
+
+
+class Dice_Classwise(Metric):
+    def __init__(
+        self,
+        num_classes: int,
+        threshold: float = 0.5,
+        zero_division: int = 0,
+        ignore_index: Optional[int] = None,
+        top_k: Optional[int] = None,
+        multiclass: Optional[bool] = None,
+        **kwargs: Any,
+    ) -> None:
+        super().__init__(**kwargs)
+        self.num_classes = num_classes
+        self.threshold = threshold
+        self.zero_division = zero_division
+        self.ignore_index = ignore_index
+        self.top_k = top_k
+        self.multiclass = multiclass
+
+        default: Callable = lambda: torch.zeros((self.num_classes,), dtype=torch.long)
+        self.add_state("tp", default=default(), dist_reduce_fx="sum")
+        self.add_state("fp", default=default(), dist_reduce_fx="sum")
+        self.add_state("tn", default=default(), dist_reduce_fx="sum")
+        self.add_state("fn", default=default(), dist_reduce_fx="sum")
+
+    def update(self, preds: Tensor, target: Tensor) -> None:
+        tp, fp, tn, fn = _stat_scores_update(
+            preds,
+            target,
+            reduce="none",
+            mdmc_reduce="global",
+            threshold=self.threshold,
+            num_classes=self.num_classes,
+            top_k=self.top_k,
+            multiclass=self.multiclass,
+            ignore_index=self.ignore_index,
+        )
+        self.tp += tp
+        self.fp += fp
+        self.tn += tn
+        self.fn += fn
+
+    def compute(self) -> Tensor:
+        return _dice_compute(
+            self.tp,
+            self.fp,
+            self.fn,
+            average="none",
+            mdmc_average="global",
+            zero_division=self.zero_division
+        )
+
+    def _get_final_stats(self) -> Tuple[Tensor, Tensor, Tensor, Tensor]:
+        return self.tp, self.fp, self.tn, self.fn
