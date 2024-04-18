@@ -31,7 +31,7 @@ from torchmetrics.classification.confusion_matrix import (
     MulticlassConfusionMatrix,
     MultilabelConfusionMatrix,
 )
-from torchmetrics.classification.dice import Dice
+from torchmetrics.classification.dice import Dice, Dice_Classwise
 from torchmetrics.classification.exact_match import ExactMatch, MulticlassExactMatch, MultilabelExactMatch
 from torchmetrics.classification.f_beta import (
     BinaryF1Score,
