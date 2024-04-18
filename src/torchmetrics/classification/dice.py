@@ -174,7 +174,7 @@ class Dice(Metric):
         self.ignore_index = ignore_index
         self.top_k = top_k
 
-        if average not in ["micro", "macro", "samples"]:
+        if average not in ["micro", "macro", "samples", "none"]: ### none is now available
             raise ValueError(f"The `reduce` {average} is not valid.")
 
         if mdmc_average not in [None, "samplewise", "global"]:
